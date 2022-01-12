@@ -45,15 +45,14 @@ public:
   using typename Base::traits_type;
   using typename Base::value_type;
 
-  bounded_basic_string() {
-    std::cout << "bounded_basic_string: " << UpperBound << '\n';
-  }
-
+  // Constructors
   /// Create an empty %bounded_basic_string object.
   bounded_basic_string()
   noexcept (noexcept(Allocator()))
   : Base()
-  {}
+  {
+    std::cout << "bounded_basic_string: " << UpperBound << '\n';
+  }
 
   /// Create an empty %bounded_basic_string object.
   /**
@@ -184,7 +183,7 @@ public:
     const Allocator & alloc = allocator_type())
   : Base(first, last, alloc)
   {
-    if (length() > UpperBound) {
+    if (this->length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
@@ -263,7 +262,7 @@ public:
     const Allocator & alloc = allocator_type())
   : Base(t, alloc)
   {
-    if (length() > UpperBound) {
+    if (this->length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
@@ -283,7 +282,7 @@ public:
     const Allocator & alloc = allocator_type())
   : Base(t, pos, n, alloc)
   {
-    if (length() > UpperBound) {
+    if (this->length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
@@ -292,6 +291,7 @@ public:
   ~bounded_basic_string() noexcept
   {}
 
+  // Assignment operators
   /// TODO
   /**
    * TODO
@@ -337,7 +337,7 @@ public:
   operator=(CharT ch)
   {
     (void)Base::operator=(ch);
-    if (length() > UpperBound) {
+    if (this->length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
@@ -368,11 +368,234 @@ public:
   operator=(const T & t)
   {
     (void)Base::operator=(t);
-    if (length() > UpperBound) {
+    if (this->length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
   }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(typename Base::size_type count, CharT ch)
+  {
+    (void)Base::assign(count, ch);
+    if (count > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(const bounded_basic_string & str)
+  {
+    (void)Base::assign(str);
+    if (str.length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(const bounded_basic_string & str,
+    typename Base::size_type pos,
+    typename Base::size_type count = Base::npos)
+  {
+    (void)Base::assign(str, pos, count);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(bounded_basic_string && str)
+  noexcept
+  {
+    (void)Base::assign(std::move(str));
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(const CharT * s, typename Base::size_type count)
+  {
+    (void)Base::assign(s, count);
+    if (count > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(const CharT * s)
+  {
+    (void)Base::assign(s);
+    if (Traits::length(s) > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  template<
+    typename InputIterator
+  >
+  bounded_basic_string &
+  assign(InputIterator first,
+    InputIterator last)
+  {
+    (void)Base::assign(first, last);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  bounded_basic_string &
+  assign(std::initializer_list<CharT> ilist)
+  {
+    (void)Base::assign(ilist);
+    if (ilist.size() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  template<
+    typename T
+  >
+  bounded_basic_string &
+  assign(const T & t)
+  {
+    (void)Base::assign(t);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  template<
+    typename T
+  >
+  bounded_basic_string &
+  assign(const T & t,
+    typename Base::size_type pos,
+    typename Base::size_type count = Base::npos)
+  {
+    (void)Base::assign(t, pos, count);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  // TODO - capacitry
+  using Base::capacity;
+  using Base::empty;
+  using Base::length;
+  using Base::shrink_to_fit;
+  using Base::size;
+
+  /// Returns the size of the largest possible %bounded_basic_string.
+  typename Base::size_type
+  max_size() const noexcept
+  {
+    return std::min(UpperBound, Base::max_size());
+  }
+
+  /// TODO
+  /**
+   * TODO
+   */
+  void
+  reserve(typename Base::size_type new_cap = 0)
+  {
+    Base::reserve(new_cap);
+    if (new_cap > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+  }
+
+  // TODO - iterators
+  using Base::begin;
+  using Base::end;
+  using Base::cbegin;
+  using Base::cend;
+  using Base::crbegin;
+  using Base::crend;
+  using Base::rbegin;
+  using Base::rend;
+
+  // TODO - element access
+  using Base::at;
+  using Base::back;
+  using Base::front;
+  using Base::operator[];
+  using Base::data;
+  using Base::c_str;
+
+  // TODO - operations
+
+  // TODO - search
+  using Base::find;
+  using Base::rfind;
+  using Base::find_first_of;
+  using Base::find_first_not_of;
+  using Base::find_last_of;
+  using Base::find_last_not_of;
+
+  // TODO - nonmember functions
+
+  // TODO - constants
+  using Base::npos;
+
+  // TODO - input/output
+
+  // TODO - numeric conversions
+
+  // TODO - literals
+
+  // TODO - helper classes (hashing)
 };
 
 #endif /* BOUNDED_STRING_HPP */
