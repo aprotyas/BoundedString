@@ -1,17 +1,20 @@
-#pragma once
 #ifndef BOUNDED_STRING_HPP
 #define BOUNDED_STRING_HPP
 
 #include <algorithm>
 #include <memory>
 #include <iostream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 
 /// A string based on std::basic_string but with an upper bound.
 /**
  * Meets the same requirements as std::basic_string.
+ * Only compiles if UpperBound is a positive integral value.
  *
  * \param CharT Type of character
  * \param UpperBound The upper bound for the number of characters
@@ -19,10 +22,11 @@
  * \param Allocator Allocator type, defaults to std::allocator<CharT>
  */
 template<
-  class CharT,
+  typename CharT,
   std::size_t UpperBound,
-  class Traits = std::char_traits<CharT>,
-  class Allocator = std::allocator<CharT>
+  typename Traits = std::char_traits<CharT>,
+  typename Allocator = std::allocator<CharT>,
+  typename = std::enable_if_t<(UpperBound > 0)>
 >
 class bounded_basic_string
   : protected std::basic_string<CharT, Traits, Allocator>
@@ -322,10 +326,10 @@ public:
   bounded_basic_string &
   operator=(const CharT * s)
   {
-    (void)Base::operator=(s);
     if (Traits::length(s) > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::operator=(s);
     return *this;
   }
 
@@ -336,10 +340,8 @@ public:
   bounded_basic_string &
   operator=(CharT ch)
   {
+    // No length check required since UpperBound > 0
     (void)Base::operator=(ch);
-    if (this->length() > UpperBound) {
-      throw std::length_error("Exceeded upper bound");
-    }
     return *this;
   }
 
@@ -350,10 +352,10 @@ public:
   bounded_basic_string &
   operator=(std::initializer_list<CharT> ilist)
   {
-    (void)Base::operator=(ilist);
     if (ilist.size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::operator=(ilist);
     return *this;
   }
 
@@ -368,7 +370,7 @@ public:
   operator=(const T & t)
   {
     (void)Base::operator=(t);
-    if (this->length() > UpperBound) {
+    if (this -> length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
@@ -381,10 +383,10 @@ public:
   bounded_basic_string &
   assign(typename Base::size_type count, CharT ch)
   {
-    (void)Base::assign(count, ch);
     if (count > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(count, ch);
     return *this;
   }
 
@@ -395,10 +397,10 @@ public:
   bounded_basic_string &
   assign(const bounded_basic_string & str)
   {
-    (void)Base::assign(str);
     if (str.length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(str);
     return *this;
   }
 
@@ -426,10 +428,10 @@ public:
   assign(bounded_basic_string && str)
   noexcept
   {
-    (void)Base::assign(std::move(str));
-    if (this->length() > UpperBound) {
+    if (str.length() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(std::move(str));
     return *this;
   }
 
@@ -440,10 +442,10 @@ public:
   bounded_basic_string &
   assign(const CharT * s, typename Base::size_type count)
   {
-    (void)Base::assign(s, count);
     if (count > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(s, count);
     return *this;
   }
 
@@ -454,10 +456,10 @@ public:
   bounded_basic_string &
   assign(const CharT * s)
   {
-    (void)Base::assign(s);
     if (Traits::length(s) > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(s);
     return *this;
   }
 
@@ -486,10 +488,10 @@ public:
   bounded_basic_string &
   assign(std::initializer_list<CharT> ilist)
   {
-    (void)Base::assign(ilist);
     if (ilist.size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    (void)Base::assign(ilist);
     return *this;
   }
 
@@ -540,6 +542,7 @@ public:
   typename Base::size_type
   max_size() const noexcept
   {
+    // Underlying string impl may have reserved more space than UpperBound
     return std::min(UpperBound, Base::max_size());
   }
 
@@ -550,10 +553,10 @@ public:
   void
   reserve(typename Base::size_type new_cap = 0)
   {
-    Base::reserve(new_cap);
     if (new_cap > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
+    Base::reserve(new_cap);
   }
 
   // TODO - iterators
@@ -575,6 +578,230 @@ public:
   using Base::c_str;
 
   // TODO - operations
+  /*
+   * Not addressed yet
+   * append
+   * operator+=
+   * replace
+   * resize
+   */
+  using Base::clear;
+  using Base::erase;
+  using Base::pop_back;
+  using Base::compare;
+  using Base::substr;
+  using Base::copy;
+
+  /// TODO
+  /*
+   * TODO
+   */
+  void
+  swap(bounded_basic_string & other)
+  noexcept
+  {
+    if (other -> length() >= UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    Base::swap(other);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  void
+  push_back(CharT ch)
+  {
+    if (this -> length() >= UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    Base::push_back(ch);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  bounded_basic_string &
+  insert(typename Base::size_type index,
+    typename Base::size_type count,
+    CharT ch)
+  {
+    if (this->length() + count > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    (void)Base::insert(index, count, ch);
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  bounded_basic_string &
+  insert(typename Base::size_type index,
+    const CharT * s)
+  {
+    if (this->length() + Traits::length(s) > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    (void)Base::insert(index, s);
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  bounded_basic_string &
+  insert(typename Base::size_type index,
+    const CharT * s,
+    typename Base::size_type count)
+  {
+    if (this->length() + count > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    (void)Base::insert(index, s, count);
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  bounded_basic_string &
+  insert(typename Base::size_type index,
+    const bounded_basic_string & str)
+  {
+    if (this->length() + str.length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    (void)Base::insert(index, str);
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  bounded_basic_string &
+  insert(typename Base::size_type index,
+    const bounded_basic_string & str,
+    typename Base::size_type index_str,
+    typename Base::size_type count = Base::npos)
+  {
+    if (this->length() + str.substr(index_str, count).length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    (void)Base::insert(index, str, index_str, count);
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  typename Base::iterator
+  insert(
+    typename Base::const_iterator pos,
+    CharT ch)
+  {
+    if (this->length() >= UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return Base::insert(pos, ch);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  typename Base::iterator
+  insert(
+    typename Base::const_iterator pos,
+    typename Base::size_type count,
+    CharT ch)
+  {
+    if (this->length() + count > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return Base::insert(pos, count, ch);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  template<
+    typename InputIterator
+  >
+  typename Base::iterator
+  insert(
+    typename Base::const_iterator pos,
+    InputIterator first,
+    InputIterator last)
+  {
+    if (this->length() + std::distance(first, last) > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return Base::insert(pos, first, last);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  typename Base::iterator
+  insert(
+    typename Base::const_iterator pos,
+    std::initializer_list<CharT> ilist)
+  {
+    if (this->length() + ilist.size() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return Base::insert(pos, ilist);
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  template<
+    typename T
+  >
+  bounded_basic_string &
+  insert(
+    typename Base::size_type pos,
+    const T & t)
+  {
+    (void)Base::insert(pos, t);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
+
+  /// TODO
+  /*
+   * TODO
+   */
+  template<
+    typename T
+  >
+  bounded_basic_string &
+  insert(
+    typename Base::size_type index,
+    const T & t,
+    typename Base::size_type index_str,
+    typename Base::size_type count = Base::npos)
+  {
+    (void)Base::insert(index, t, index_str, count);
+    if (this->length() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+    return *this;
+  }
 
   // TODO - search
   using Base::find;
