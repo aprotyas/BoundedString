@@ -2,9 +2,10 @@
 #define BOUNDED_STRING_HPP
 
 #include <algorithm>
-#include <memory>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -16,10 +17,10 @@
  * Meets the same requirements as std::basic_string.
  * Only compiles if UpperBound is a positive integral value.
  *
- * \param CharT Type of character
- * \param UpperBound The upper bound for the number of characters
- * \param Traits The traits type for the string's characters, defaults to std::char_traits<CharT>
- * \param Allocator Allocator type, defaults to std::allocator<CharT>
+ * \tparam CharT Type of character
+ * \tparam UpperBound The upper bound for the number of characters
+ * \tparam Traits The traits type for the string's characters, defaults to std::char_traits<CharT>
+ * \tparam Allocator Allocator type, defaults to std::allocator<CharT>
  */
 template<
   typename CharT,
@@ -35,19 +36,19 @@ class bounded_basic_string
 
 public:
   // Forwarding member types from std::basic_string
-  using typename Base::allocator_type;
-  using typename Base::const_iterator;
-  using typename Base::const_pointer;
-  using typename Base::const_reference;
-  using typename Base::const_reverse_iterator;
-  using typename Base::difference_type;
-  using typename Base::iterator;
-  using typename Base::pointer;
-  using typename Base::reference;
-  using typename Base::reverse_iterator;
-  using typename Base::size_type;
-  using typename Base::traits_type;
-  using typename Base::value_type;
+  using typename Base::traits_type;             // Traits
+  using typename Base::value_type;              // CharT
+  using typename Base::allocator_type;          // Allocator
+  using typename Base::size_type;               // std::allocator_traits<Allocator>::size_type
+  using typename Base::difference_type;         // std::allocator_traits<Allocator>::difference_type
+  using typename Base::reference;               // value_type&
+  using typename Base::const_reference;         // const value_type&
+  using typename Base::pointer;                 // std::allocator_traits<Allocator>::pointer
+  using typename Base::const_pointer;           // std::allocator_traits<Allocator>::const_pointer
+  using typename Base::iterator;                // Legacy[RandomAccess,Contiguous]Iterator to value_type
+  using typename Base::const_iterator;          // Legacy[RandomAccess,Contiguous]Iterator to const value_type
+  using typename Base::reverse_iterator;        // std::reverse_iterator<iterator>
+  using typename Base::const_reverse_iterator;  // std::reverse_iterator<const_iterator>
 
   // Constructors
   /// Create an empty %bounded_basic_string object.
@@ -81,7 +82,7 @@ public:
   bounded_basic_string(
     typename Base::size_type count,
     CharT ch,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(count, ch, alloc)
   {
     if (count > UpperBound) {
@@ -101,10 +102,10 @@ public:
   bounded_basic_string(
     const bounded_basic_string& other,
     typename Base::size_type pos,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(other, pos, alloc)
   {
-    if (other.length() - pos > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
@@ -126,45 +127,44 @@ public:
     const bounded_basic_string& other,
     typename Base::size_type pos,
     typename Base::size_type count,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(other, pos, alloc)
   {
-    typename Base::size_type end;
-    if (count == Base::npos || pos + count > other.size()) {
-      end = other.size();
-    } else {
-      end = pos + count;
-    }
-    if (end - pos > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
 
-  /// TODO
+  /// Create a %bounded_basic_string with the first count characters of a pointed string.
   /**
-   * TODO
+   * This constructor creates the %bounded_basic_string object as a substring
+   * of the character string pointed to by @a s over the index range [0, @a count).
+   * If the specified range is not valid for the provided string, there is undefined behavior.
    */
   bounded_basic_string(
     const CharT* s,
     typename Base::size_type count,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(s, count, alloc)
   {
-    if (count > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
 
-  /// TODO
+  /// Constructs a %bounded_basic_string using the contents of a null-terminated character string.
   /**
-   * TODO
+   * This constructor essentially creates a %bounded_basic_string object which has
+   * content @a s[0, Traits::length(@ s)). There is undefined behavior if that is an
+   * invalid range.
    */
   bounded_basic_string(
     const CharT* s,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(s, alloc)
   {
-    if (Traits::length(s) > UpperBound) {
+    // or should this be Traits::length(s) > UpperBound?
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
@@ -184,27 +184,15 @@ public:
   bounded_basic_string(
     InputIterator first,
     InputIterator last,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(first, last, alloc)
   {
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
 
   /// %bounded_basic_string copy constructor.
-  /**
-   * Constructs a %bounded_basic_string with a copy of the
-   * contents of @a other.
-   *
-   * \param other The %bounded_basic_string to copy
-   */
-  bounded_basic_string(
-    const bounded_basic_string & other)
-  : Base(other)
-  {}
-
-  /// %bounded_basic_string copy constructor with an alternative allocator.
   /**
    * Constructs a %bounded_basic_string with a copy of the
    * contents of @a other with the @a alloc allocator.
@@ -214,82 +202,103 @@ public:
    */
   bounded_basic_string(
     const bounded_basic_string & other,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(other, alloc)
-  {}
+  {
+    if (size() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+  }
 
   /// %bounded_basic_string move constructor.
   /**
-   * TODO
-   */
-  bounded_basic_string(
-    bounded_basic_string && other)
-  noexcept
-  : Base(std::move(other))
-  {}
-
-  /// %bounded_basic_string move constructor with an alternative allocator.
-  /**
-   * TODO
+   * Constructs a %bounded_basic_string object with the content of
+   * @a other using move semantics, leaving @a other in valid but
+   * unspecified state.
+   *
+   * \param other The %bounded_basic_string to move
+   * \param alloc An allocator object
    */
   bounded_basic_string(
     bounded_basic_string && other,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
+  noexcept
   : Base(std::move(other), alloc)
-  {}
+  {
+    if (size() > UpperBound) {
+      throw std::length_error("Exceeded upper bound");
+    }
+  }
 
 
   /// Create a %bounded_basic_string from an initializer list.
   /**
-   * TODO
+   * Constructs a %bounded_basic_string object with the contents of the
+   * initializer list @a ilist.
+   *
+   * \param ilist The initializer to construct from
+   * \param alloc An allocator object
    */
   bounded_basic_string(
     std::initializer_list<CharT> ilist,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(ilist, alloc)
   {
-    if (ilist.size() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
 
-  /// TODO
+  /// Create a %bounded_basic_string from something that could be converted to a string view.
   /**
-   * TODO
+   * Constructs a %bounded_basic_string object by converting @a t to a string view, say sv, and
+   * essentially calling bounded_basic_string(sv.data(), sv.size(), @a alloc)
+   *
+   * \param t An object that can be converted to a stringview
+   * \param alloc An allocator object
    */
   template<
-    typename T
+    typename StringViewLike
   >
   explicit
   bounded_basic_string(
-    const T & t,
-    const Allocator & alloc = allocator_type())
+    const StringViewLike & t,
+    const Allocator & alloc = Allocator())
   : Base(t, alloc)
   {
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
 
-  /// TODO
+  /// Create a %bounded_basic_string from a subet of something that can be converted to string view.
   /**
-   * TODO
+   * Constructs a %bounded_basic_string object by converting @a t to a string view, say sv, and
+   * essentially calling bounded_basic_string(sv.substr(@a pos, @a n), @a alloc)
+   *
+   * \param t An object that can be converted to a stringview
+   * \param pos The index from which to copy
+   * \param n The number of characters to copy
+   * \param alloc An allocator object
    */
   template<
-    typename T
+    typename StringViewLike
   >
   explicit
   bounded_basic_string(
-    const T & t,
+    const StringViewLike & t,
     typename Base::size_type pos,
     typename Base::size_type n,
-    const Allocator & alloc = allocator_type())
+    const Allocator & alloc = Allocator())
   : Base(t, pos, n, alloc)
   {
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
   }
+
+  /// bounded_basic_string cannot be constructed from nullptr.
+  bounded_basic_string(std::nullptr_t) = delete;
 
   /// Dtor does not perform any memory management.
   ~bounded_basic_string() noexcept
