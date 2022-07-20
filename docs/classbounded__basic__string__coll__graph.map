@@ -1,0 +1,4 @@
+<map id="bounded_basic_string&lt; CharT, UpperBound, Traits, Allocator, typename &gt;" name="bounded_basic_string&lt; CharT, UpperBound, Traits, Allocator, typename &gt;">
+<area shape="rect" id="node1" title="A string based on std::basic_string but with an upper bound." alt="" coords="5,124,221,180"/>
+<area shape="rect" id="node2" title=" " alt="" coords="24,5,203,76"/>
+</map>
