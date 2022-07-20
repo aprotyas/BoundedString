@@ -305,9 +305,13 @@ public:
   {}
 
   // Assignment operators
-  /// TODO
+  /// %bounded_basic_string copy assignment operator.
   /**
-   * TODO
+   * Replaces the contents with a copy of @a str.
+   *
+   * \param str The string to be assigned from
+   * \return L-value reference to *this
+   * \throws length_error If the string to be copied is longer than @p UpperBound
    */
   bounded_basic_string &
   operator=(const bounded_basic_string & str)
@@ -316,9 +320,13 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// %bounded_basic_string move assignment operator.
   /**
-   * TODO
+   * Replaces the contents with those of @a str using move semantics.
+   *
+   * \param str The string to be moved from
+   * \return L-value reference to *this
+   * \throws length_error If the string to be moved is longer than @p UpperBound
    */
   bounded_basic_string &
   operator=(const bounded_basic_string && str)
@@ -328,9 +336,13 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Assign to a %bounded_basic_string from a character array.
   /**
-   * TODO
+   * Replaces the contents with those of the null terminated character string pointed to by @a s.
+   *
+   * \param s Pointer to a null terminated character string
+   * \return L-value reference to *this
+   * \throws length_error If the string pointed to by @a s is longer than @p UpperBound
    */
   bounded_basic_string &
   operator=(const CharT * s)
@@ -342,21 +354,29 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace string object with a single character.
   /**
-   * TODO
+   * Replace the contents as if by assign(std::addressof(@a ch, 1)).
+   *
+   * \param ch A character type object
+   * \return L-value reference to *this
    */
   bounded_basic_string &
   operator=(CharT ch)
   {
     // No length check required since UpperBound > 0
+    // This function is probably not necessary? Base definition should suffice
     (void)Base::operator=(ch);
     return *this;
   }
 
-  /// TODO
+  /// Replace string object with an initalizer list.
   /**
-   * TODO
+   * Replace the contents as if by assign(@a ilist.begin(), @a ilist.size())
+   *
+   * \param ilist An initalizer list object
+   * \return L-value reference to *this
+   * \throws length_error If @a ilist is longer than @p UpperBound
    */
   bounded_basic_string &
   operator=(std::initializer_list<CharT> ilist)
@@ -368,26 +388,36 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace string object with the contents of a string view-like object.
   /**
-   * TODO
+   * Replace the contents by first converting @a t to a string view and then assigning to this
+   * object.
+   *
+   * \param t An object that can be converted to a string view
+   * \return L-value reference to *this
+   * \throws length_error If the stringview like object is longer than @p UpperBound
    */
   template<
-    typename T
+    typename StringViewLike
   >
   bounded_basic_string &
-  operator=(const T & t)
+  operator=(const StringViewLike & t)
   {
     (void)Base::operator=(t);
-    if (this -> length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
   }
 
-  /// TODO
+  /// Replace string with copies of a character.
   /**
-   * TODO
+   * Replace the contents with @a count copies of character @a ch.
+   *
+   * \param count Number of copies of the character
+   * \param ch The character to be copied
+   * \return L-value reference to *this
+   * \throws length_error If @a count > @p UpperBound
    */
   bounded_basic_string &
   assign(typename Base::size_type count, CharT ch)
@@ -399,23 +429,33 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace with another string.
   /**
-   * TODO
+   * Replace the contents with a copy of @a str, i.e. &this = str.
+   *
+   * \param str The string to copy from
+   * \return L-value reference to *this
+   * \throws length_error If the copied string is longer than @p UpperBound
    */
   bounded_basic_string &
   assign(const bounded_basic_string & str)
   {
-    if (str.length() > UpperBound) {
+    if (str.size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     (void)Base::assign(str);
     return *this;
   }
 
-  /// TODO
+  /// Replace with a substring.
   /**
-   * TODO
+   * Replaces the contents with a substring [@a pos, @a pos + @a count) of @a str.
+   *
+   * \param str The string to copy from
+   * \param pos The position to start the substring
+   * \param count The number of characters in the substring
+   * \return L-value reference to *this
+   * \throws length_error If the copied substring is longer than @p UpperBound
    */
   bounded_basic_string &
   assign(const bounded_basic_string & str,
@@ -423,30 +463,40 @@ public:
     typename Base::size_type count = Base::npos)
   {
     (void)Base::assign(str, pos, count);
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
   }
 
-  /// TODO
+  /// Replaces with a string but with move semantics.
   /**
-   * TODO
+   * Replaces the contents with a string using move semantics, i.e. *this = std::move(@a str).
+   *
+   * \param str The string to move from
+   * \return L-value reference to *this
+   * \throws length_error If the string to be moved is longer than @p UpperBound
    */
   bounded_basic_string &
   assign(bounded_basic_string && str)
   noexcept
   {
-    if (str.length() > UpperBound) {
+    if (str.size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     (void)Base::assign(std::move(str));
     return *this;
   }
 
-  /// TODO
+  /// Replaces with copies of a subset of characters from a character string.
   /**
-   * TODO
+   * Replaces the contents with copies of characters in the range [@a s, @s + @a count).
+   *
+   * \param s The character buffer to copy from
+   * \param count The number of characters to copy
+   * \return L-value reference to *this
+   * \throws length_error If @a count > @p UpperBound
+   *
    */
   bounded_basic_string &
   assign(const CharT * s, typename Base::size_type count)
@@ -458,9 +508,13 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace string with a null-terminated character string.
   /**
-   * TODO
+   * Replaces the contents with those of null-terminated character string pointed to by @a s.
+   *
+   * \param s Pointer to a null-terminated character string
+   * \return L-value reference to *this
+   * \throws length_error If the string pointed to by @a s is longer than @p UpperBound characters
    */
   bounded_basic_string &
   assign(const CharT * s)
@@ -472,9 +526,14 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace string with contents in a given iterator range.
   /**
-   * TODO
+   * Replaces the contents with copies of the characters in the range [@a first, @a last).
+   *
+   * \param first Iterator pointing to the start of the range to copy
+   * \param last Iterator pointing after the end of the range to copy
+   * \return L-value reference to *this
+   * \throws length_error If the range copied is longer than @p UpperBound
    */
   template<
     typename InputIterator
@@ -484,15 +543,19 @@ public:
     InputIterator last)
   {
     (void)Base::assign(first, last);
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
   }
 
-  /// TODO
+  /// Replace string with contents of an initializer list.
   /**
-   * TODO
+   * Replace the contents with those of the initializer list @a ilist.
+   *
+   * \param ilist Initializer list of character type
+   * \return L-value reference to *this
+   * \throws length_error If the initializer list is longer than @p UpperBound
    */
   bounded_basic_string &
   assign(std::initializer_list<CharT> ilist)
@@ -504,29 +567,42 @@ public:
     return *this;
   }
 
-  /// TODO
+  /// Replace string with contents of a stringview-like object.
   /**
-   * TODO
+   * Esentially, convert @a t to a stringview, after which this string's contents are
+   * replaced by those of the implicitly converted stringview.
+   *
+   * \param t An object resembling a stringview
+   * \return L-value reference to *this
+   * \throws length_error if length of string is longer than @p UpperBound
    */
   template<
-    typename T
+    typename StringViewLike
   >
   bounded_basic_string &
-  assign(const T & t)
+  assign(const StringViewLike & t)
   {
     (void)Base::assign(t);
-    if (this->length() > UpperBound) {
+    if (size() > UpperBound) {
       throw std::length_error("Exceeded upper bound");
     }
     return *this;
   }
 
-  /// TODO
+  /// Replace string with subset of the contents of a stringview-like object.
   /**
-   * TODO
+   * Essentially, convert @a t to a stringview and copy the [@a pos, @a pos + @a count)
+   * subrange of the stringview. Note that for @a count == npos, the entire stringview
+   * from index @a pos is copied.
+   *
+   * \param t An object resembling a stringview
+   * \param pos The index to start copying the stringview-like object from
+   * \param count The number of characters to copy
+   * \return L-value reference to *this
+   * \throws length_error if length of subview is longer than @p UpperBound
    */
   template<
-    typename T
+    typename StringViewLike
   >
   bounded_basic_string &
   assign(const T & t,
