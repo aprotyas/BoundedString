@@ -24,7 +24,6 @@ if(BUILD_DOC)
 
   doxygen_add_docs(doc_${PROJECT_NAME}
     ${PROJECT_NAME}.hpp README.md
-    ALL
     COMMENT "Generate ${PROJECT_NAME} API documentation")
 else()
   message("Please install Doxygen to generate API documentation")
