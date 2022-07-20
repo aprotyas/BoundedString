@@ -605,7 +605,7 @@ public:
     typename StringViewLike
   >
   bounded_basic_string &
-  assign(const T & t,
+  assign(const StringViewLike & t,
     typename Base::size_type pos,
     typename Base::size_type count = Base::npos)
   {

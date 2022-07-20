@@ -4,6 +4,11 @@ project(BoundedString
   LANGUAGES CXX
 )
 
+option(BUILD_LINT "Lint with clang-tidy" OFF)
+if(BUILD_LINT)
+  message(STATUS "Configuring clang-tidy for target ${PROJECT_NAME}")
+  set(CMAKE_CXX_CLANG_TIDY clang-tidy -format-style=file)
+endif()
 add_library(${PROJECT_NAME} INTERFACE
   ${PROJECT_NAME}.hpp
 )
